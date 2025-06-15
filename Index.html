@@ -1,0 +1,348 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Finscript NOC Generator</title>
+    <!-- We now only need jsPDF and FileSaver. html2pdf is no longer used for PDF generation. -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <style>
+        /* All CSS remains the same as it correctly styles the user interface */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+        }
+        .container {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+        .main-title {
+            text-align: center;
+            font-size: 2.5em;
+            font-weight: 900;
+            color: #333;
+            margin-bottom: 10px;
+            background: linear-gradient(45deg, #09203f 0%, #537895 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .sub-title {
+            text-align: center;
+            margin-top: -25px;
+            margin-bottom: 30px;
+            font-size: 0.8em;
+            color: #888;
+            text-transform: uppercase;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 1.8em;
+            font-weight: 700;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 15px;
+        }
+        .form-group { margin-bottom: 20px; }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #333;
+        }
+        input[type="text"], input[type="date"], select, textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            box-sizing: border-box;
+        }
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #537895;
+            box-shadow: 0 0 10px rgba(83, 120, 149, 0.2);
+        }
+        textarea { resize: vertical; min-height: 80px; }
+        .address-group, .representative-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border-left: 4px solid #537895;
+        }
+        .address-title {
+            font-weight: 700;
+            color: #09203f;
+            margin-bottom: 15px;
+            font-size: 1.1em;
+        }
+        .title-select { width: 100px; margin-right: 10px; display: inline-block; }
+        .name-input { width: calc(100% - 120px); display: inline-block; }
+        .download-buttons { display: flex; gap: 15px; justify-content: center; margin-top: 30px; }
+        .download-btn {
+            background: linear-gradient(45deg, #09203f, #537895);
+            color: white; padding: 15px 25px; border: none; border-radius: 8px;
+            font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.3s ease;
+            min-width: 180px; display: flex; align-items: center; justify-content: center; gap: 8px;
+        }
+        .download-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(83, 120, 149, 0.3);
+        }
+        .download-btn:disabled {
+            cursor: not-allowed; background: #aaa; transform: none; box-shadow: none;
+        }
+        .download-btn.word { background: linear-gradient(45deg, #2e8b57, #228b22); }
+        .required { color: #e74c3c; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2 class="main-title">Finscript Business Consultant</h2>
+        <h1>NOC Generator Tool</h1>
+        <p class="sub-title">Designed by SHABEEB NATTUKAL</p>
+        
+        <form id="nocForm" onsubmit="return false;">
+            <!-- Form fields remain the same -->
+            <div class="form-group">
+                <label for="date">Date <span class="required">*</span></label>
+                <input type="date" id="date" required>
+            </div>
+            
+            <div class="address-group">
+                <div class="address-title">FROM (Owner Details)</div>
+                <div class="form-group">
+                    <label for="ownerName">Owner Name <span class="required">*</span></label>
+                    <input type="text" id="ownerName" placeholder="Enter owner's full name" required>
+                </div>
+                <!-- REMOVED: Relationship with Applicant field was here -->
+                <div class="form-group">
+                    <label for="ownerAddress">Owner Address <span class="required">*</span></label>
+                    <textarea id="ownerAddress" placeholder="Enter owner's personal address with pin code" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="buildingAddress">Building Address <span class="required">*</span></label>
+                    <textarea id="buildingAddress" placeholder="Enter the building/property address" required></textarea>
+                </div>
+            </div>
+            
+            <div class="address-group">
+                <div class="address-title">Company Details</div>
+                <div class="form-group">
+                    <label for="companyName">Company Name <span class="required">*</span></label>
+                    <input type="text" id="companyName" placeholder="Enter company name (e.g., EXAMPLE ATELIER LLP)" required>
+                </div>
+            </div>
+            
+            <div class="representative-section">
+                <div class="address-title">Representative Details (Applicant)</div>
+                <div class="form-group">
+                    <label>Representative Name <span class="required">*</span></label>
+                    <select id="title" class="title-select" required>
+                        <option value="">Title</option>
+                        <option value="Mr.">Mr.</option>
+                        <option value="Mrs.">Mrs.</option>
+                        <option value="Ms.">Ms.</option>
+                        <option value="Dr.">Dr.</option>
+                    </select>
+                    <input type="text" id="repName" class="name-input" placeholder="Enter representative's full name" required>
+                </div>
+                <div class="form-group">
+                    <label for="repAddress">Representative Address <span class="required">*</span></label>
+                    <textarea id="repAddress" placeholder="Enter complete address with pin code" required></textarea>
+                </div>
+            </div>
+            
+            <div class="download-buttons">
+                <button type="button" class="download-btn" id="pdfBtn" onclick="generatePDF()">
+                    📄 Download PDF
+                </button>
+                <button type="button" class="download-btn word" onclick="generateWord()">
+                    📝 Download Word
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        const { jsPDF } = window.jspdf;
+
+        // Set default date
+        document.getElementById('date').valueAsDate = new Date();
+        
+        // Gathers all data from the form fields
+        function getFormData() {
+            const date = document.getElementById('date').value;
+            return {
+                date: date ? new Date(date).toLocaleDateString('en-GB') : '[Date]',
+                ownerName: document.getElementById('ownerName').value || '[Owner Name]',
+                // REMOVED: ownerRelationship
+                ownerAddress: document.getElementById('ownerAddress').value || '[Owner Address]',
+                buildingAddress: document.getElementById('buildingAddress').value || '[Building Address]',
+                companyName: document.getElementById('companyName').value || '[Company Name]',
+                title: document.getElementById('title').value || '[Title]',
+                repName: document.getElementById('repName').value || '[Rep Name]',
+                repAddress: document.getElementById('repAddress').value || '[Rep Address]'
+            };
+        }
+        
+        function validateForm() {
+            const form = document.getElementById('nocForm');
+            if (!form.checkValidity()) {
+                form.reportValidity();
+                return false;
+            }
+            return true;
+        }
+
+        function generateFilename(data, extension) {
+            const ownerNameClean = data.ownerName.replace(/[^a-zA-Z0-9]/g, '_');
+            const companyNameClean = data.companyName.replace(/[^a-zA-Z0-9]/g, '_');
+            const today = new Date();
+            const dateStr = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0') + '-' + String(today.getDate()).padStart(2, '0');
+            return `NOC_${ownerNameClean}_${companyNameClean}_${dateStr}.${extension}`;
+        }
+        
+        // --- PDF GENERATION LOGIC ---
+        function generatePDF() {
+            if (!validateForm()) return;
+
+            const pdfBtn = document.getElementById('pdfBtn');
+            pdfBtn.disabled = true;
+            pdfBtn.innerHTML = '&#9203; Generating...';
+
+            try {
+                const data = getFormData();
+                const applicantName = `${data.title} ${data.repName}`;
+                
+                // 1. Initialize jsPDF
+                const doc = new jsPDF({
+                    orientation: 'portrait',
+                    unit: 'mm',
+                    format: 'a4'
+                });
+
+                // 2. Define constants for layout
+                const leftMargin = 25;
+                const rightMargin = 25;
+                const topMargin = 25;
+                const bottomMargin = 25;
+                const contentWidth = doc.internal.pageSize.getWidth() - leftMargin - rightMargin;
+                const lineSpacing = 7;
+                let currentY = topMargin;
+
+                // Set font for the whole document
+                doc.setFont('times', 'normal');
+                doc.setFontSize(12);
+
+                // --- Build the PDF content programmatically ---
+
+                // Top decorative line
+                doc.setLineWidth(1);
+                doc.line(leftMargin, currentY, doc.internal.pageSize.getWidth() - rightMargin, currentY);
+                currentY += lineSpacing;
+
+                // Date
+                doc.text(`Date: ${data.date}`, doc.internal.pageSize.getWidth() - rightMargin, currentY, { align: 'right' });
+                currentY += lineSpacing * 2; 
+
+                // FROM address block
+                doc.setFont('times', 'bold');
+                doc.text('FROM,', leftMargin, currentY);
+                currentY += lineSpacing;
+                doc.setFont('times', 'normal');
+                let fromAddressLines = doc.splitTextToSize(
+                    `${data.ownerName.toUpperCase()}\n${data.ownerAddress.toUpperCase()}`,
+                    contentWidth
+                );
+                doc.text(fromAddressLines, leftMargin, currentY);
+                currentY += (fromAddressLines.length * lineSpacing);
+                currentY += lineSpacing; // Extra space
+
+                // TO address block
+                doc.setFont('times', 'bold');
+                doc.text('TO,', leftMargin, currentY);
+                currentY += lineSpacing;
+                doc.setFont('times', 'normal');
+                const toAddress = `REGISTRAR OF COMPANIES, KERALA\n"COMPANY LAW BHAVAN"\nBMC ROAD, THRIKKARA\nERNAKULAM, KOCHI-682021`;
+                let toAddressLines = doc.splitTextToSize(toAddress, contentWidth);
+                doc.text(toAddressLines, leftMargin, currentY);
+                currentY += (toAddressLines.length * lineSpacing);
+                currentY += lineSpacing * 2; // Extra space
+
+                // Subject line
+                doc.setFont('times', 'bold');
+                doc.setLineHeightFactor(1.5);
+                doc.text('Sub: No Objection for using premises as registered office', doc.internal.pageSize.getWidth() / 2, currentY, { align: 'center' });
+                const subjectTextWidth = doc.getTextWidth('Sub: No Objection for using premises as registered office');
+                const subjectX = (doc.internal.pageSize.getWidth() - subjectTextWidth) / 2;
+                doc.setLineWidth(0.5);
+                doc.line(subjectX, currentY + 1, subjectX + subjectTextWidth, currentY + 1); // Underline
+                currentY += lineSpacing * 2;
+                
+                // Body content - UPDATED
+                doc.setFont('times', 'normal');
+                const bodyText = `Dear Sir/Madam,\n\nI, ${data.ownerName.toUpperCase()}, residing at the above-mentioned address, am the lawful owner of the premises situated at ${data.buildingAddress.toUpperCase()}. I hereby give my consent and have no objection to ${applicantName.toUpperCase()} using the aforementioned premises as the registered office for the company named ${data.companyName.toUpperCase()}.`;
+                let bodyLines = doc.splitTextToSize(bodyText, contentWidth);
+                doc.text(bodyLines, leftMargin, currentY);
+                currentY += (bodyLines.length * lineSpacing);
+                currentY += lineSpacing * 2; // Extra space
+
+                // Closing
+                doc.text('Yours truly,', leftMargin, currentY);
+                currentY += lineSpacing;
+                doc.text('Thanking You', leftMargin, currentY);
+                currentY += lineSpacing * 4;
+
+                // Signature
+                doc.text(`(${data.ownerName.toUpperCase()})`, leftMargin, currentY);
+                currentY += lineSpacing * 2;
+
+                // Bottom decorative line
+                doc.setLineWidth(0.3);
+                doc.line(leftMargin, currentY, doc.internal.pageSize.getWidth() - rightMargin, currentY);
+
+                // 3. Save the PDF
+                doc.save(generateFilename(data, 'pdf'));
+
+            } catch (error) {
+                console.error("PDF Generation Failed:", error);
+                alert("Sorry, there was an error creating the PDF.");
+            } finally {
+                pdfBtn.disabled = false;
+                pdfBtn.innerHTML = '📄 Download PDF';
+            }
+        }
+
+        // --- Word generation ---
+        function generateWord() {
+            if (!validateForm()) return;
+            const data = getFormData();
+            const applicantName = `${data.title} ${data.repName}`;
+            
+            // UPDATED text for Word doc
+            const nocText = `Date: ${data.date}\n\nFROM,\n\n${data.ownerName.toUpperCase()}\n${data.ownerAddress.toUpperCase()}\n\nTO,\n\nREGISTRAR OF COMPANIES, KERALA\n"COMPANY LAW BHAVAN"\nBMC ROAD, THRIKKARA\nERNAKULAM, KOCHI-682021\n\nDear Sir/Madam,\n\nSub: No Objection for using premises as registered office\n\nI, ${data.ownerName.toUpperCase()}, residing at the above-mentioned address, am the lawful owner of the premises situated at ${data.buildingAddress.toUpperCase()}. I hereby give my consent and have no objection to ${applicantName.toUpperCase()} using the aforementioned premises as the registered office for the company named ${data.companyName.toUpperCase()}.\n\nYours truly,\n\nThanking You\n\n${data.ownerName.toUpperCase()}`;
+
+            const wordHeader = "<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'><head><meta charset='utf-8'><title>NOC Document</title><style>body{font-family:'Times New Roman', Times, serif; font-size:12pt; margin: 1in;}</style></head><body>";
+            const wordFooter = "</body></html>";
+            const wordContent = wordHeader + nocText.replace(/\n/g, '<br>') + wordFooter;
+
+            const blob = new Blob([wordContent], { type: 'application/msword' });
+            saveAs(blob, generateFilename(data, 'doc'));
+        }
+    </script>
+</body>
+</html>
+
+
